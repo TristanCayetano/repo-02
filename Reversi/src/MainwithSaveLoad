@@ -1,0 +1,159 @@
+import java.util.InputMismatchException;
+import java.util.Scanner;
+import java.io.BufferedReader;
+import java.io.BufferedWriter;
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileReader;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.io.PrintWriter;
+
+public class MainwithSaveLoad {
+
+  static GameBoard board;
+  static Player player1, player2;
+
+  public static void main(String[] args) {
+    System.out.println("Willkommen zu Reversi");
+    setPlayers();
+    System.out.println("Wähle die Spielfeldgröße: ");
+    setBoard();
+    GameLoop(); 
+  }
+
+  static void GameLoop() {
+    /*
+     * Hier wird nach 2 Zügen sofort gespeichert und geladet, um zu Testen ob die beide Funktionen funktionieren
+     */
+    for (int i = 0; i < (board.size * board.size) - 9; i++) {
+      place(player1);
+      save();          //"save on progress"
+      place(player2);
+      save();      //"save on progress"
+      System.out.println("Geladenes Spiel: ");              
+      load("C:/Users/boss/Desktop/OOT/PÜ3/ReversiCodes/saved game/Test.txt"); // laden
+    }
+  }
+
+  /**
+   * Methode zum erstellen des Spieler
+   */
+
+  static void setPlayers() {
+    System.out.println("Spieler 1 gib einen Namen ein: ");
+    player1 = new Player(new Scanner(System.in).next(), 'X');
+
+    System.out.println("Spieler 2 gib einen Namen ein: ");
+    player2 = new Player(new Scanner(System.in).next(), 'O');
+  }
+
+  /**
+   * Methode zum erstellen des Spielfeldes
+   */
+
+  static void setBoard() {
+    try { // Überprüfung auf korrekte Zahlen
+      int size = new Scanner(System.in).nextInt();
+      if (size > 5 && size % 2 == 0) {
+        board = new GameBoard(size + 2);
+      } else {
+        throw new InputMismatchException();
+      }
+    } catch (InputMismatchException e) {
+      System.out.println("Bitte nur gerade Zahlen größer 5 eingeben:");
+      setBoard();
+    }
+  }
+  static void save() {
+    save("C:/Users/boss/Desktop/OOT/PÜ3/ReversiCodes/saved game/Test.txt");
+  }
+
+  /**
+   * Methode zum platzieren eines Steines
+   *
+   * @param p
+   *            der Spieler der am Zug ist
+   */
+
+  static void place(Player p) {
+    System.out.println(p.name + " ist am Zug:");
+    String s = new Scanner(System.in).next();
+    int x = s.toUpperCase().charAt(0);
+    int y = s.charAt(1);
+    if (s.length() == 2 && ((x > 64 && x < 91) && (y > 48 && y < 58))) {
+      board.place(p.symbol, x - 65, y - 49);
+    }
+  }
+
+  /**
+   * Methode zum Speichern des Spielstandes
+   *
+   * @param file
+   *            Speicherdatei
+   *
+   */
+
+  static void save(String filepath) {
+    BufferedWriter outWriter;
+    File outFile;
+    board.turn++;
+    
+    try { 
+      outFile = new File(filepath); // neue Datei wird erstellt und auf eingegebene Datei-Pfad gespeichert
+      outWriter = new BufferedWriter(new FileWriter(outFile));
+      outWriter.write(String.valueOf(board.size)+"."+String.valueOf(board.turn)+".");
+      for(int i = 0;i < board.size;i++){
+        for(int j = 0;j < board.size;j++)
+        {
+          outWriter.write(board.stone[i][j]); // Schreibt die Informationen die zum Speichern wichtig sind in die neue Datei
+        }
+      }
+      outWriter.close();
+    } catch (IOException e) {
+      e.printStackTrace();
+    }
+  }
+  /**
+   * Methode zum Laden des Spielstandes
+   *
+   * @param file
+   *            Speicherdatei
+   *
+   */
+  static String load(String filepath) {
+    if(board.turn%2 != 0) // überprüft wer als Letzter ein Zug gemacht hat
+    {
+      System.out.println(player2.name+" ist dran..");
+    }
+    {
+      System.out.println(player1.name + " ist dran..");
+    }
+    File inFile = new File(filepath);
+    BufferedReader inReader = null;
+    String filetxt = "";
+    String[] txtArray = new String[3];
+    int k=0;
+    
+    try {
+      inReader = new BufferedReader(new FileReader(inFile));
+        filetxt = inReader.readLine(); // lest die Informationen die wichtig sind für den Spielstand: Größe des Spielfeldes, Anzahl der Züge und die X's, O's und _'s 
+        txtArray = filetxt.split("\\.");
+        int arraySize = Integer.valueOf(txtArray[0]) , turn=Integer.valueOf(txtArray[1]);// Speichert die Informationen 
+        board.setSize(arraySize);
+        board.setTurn(turn);
+        for(int i=0;i<txtArray[2].length()/arraySize;i++)
+        {
+             for(int j=0;j<txtArray[2].length()/arraySize;j++,k++)
+            {
+               board.setStone(i, j, txtArray[2].charAt(k)); // geladene dateien in stone-Array speichern 
+            }
+        } 
+      board.draw(); // print geladenes Brett
+        inReader.close();
+    }catch (IOException e) {        
+      e.printStackTrace();
+    }
+    return filetxt;
+  }
+}
